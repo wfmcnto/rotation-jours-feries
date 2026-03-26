@@ -273,7 +273,10 @@
 
 <script>
 const LS_API='pjf_api_v3';
-let API=localStorage.getItem(LS_API)||'';
+// ⬇️ COLLEZ VOTRE URL APPS SCRIPT ICI (entre les guillemets)
+const API_FIXE = 'https://script.google.com/macros/s/AKfycbyrxXqz6eUh0SNKM9P8AZT4omykXy_MZ4Bfxm8ZtgYCuxvKFHN4nYkEhBX66wRvKinRuA/exec
+';
+let API=API_FIXE||localStorage.getItem(LS_API)||'';
 let S={agents:[],feries:[],unlocked:false};
 let PIN='';
 
@@ -306,7 +309,7 @@ function saveApiUrl(){
   if(!u.includes('script.google.com')){toast('URL invalide','error');return}
   localStorage.setItem(LS_API,u);API=u;
   document.getElementById('setupBanner').classList.add('hidden');
-  toast('✅ URL enregistrée','success');loadData();
+  toast('✅ URL enregistrée — rechargez la page si besoin','success');loadData();
 }
 function saveApiC(){
   const u=document.getElementById('apiC').value.trim();
@@ -552,6 +555,11 @@ function esc(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;")}
 
 // ── INIT ─────────────────────────────────────────────
 window.onload=()=>{
+  // Priorité : URL codée en dur > localStorage
+  if(API_FIXE && API_FIXE !== 'VOTRE_URL_ICI') {
+    API = API_FIXE;
+    localStorage.setItem(LS_API, API_FIXE);
+  }
   if(API){document.getElementById('setupBanner').classList.add('hidden');document.getElementById('apiC').value=API;loadData()}
   else sync('err','Non configuré');
   updateUI();
