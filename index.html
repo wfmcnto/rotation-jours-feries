@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priorités Jours Fériés</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1a2744;--navy-l:#253460;--gold:#c9a84c;--gold-l:#e8c97a;
+    --cream:#faf8f3;--cream2:#f0ece0;--red:#c94c4c;--green:#3d8b5e;
+    --text:#2c2c2c;--tl:#666;--border:#ddd5bb;
+    --shadow:0 4px 24px rgba(26,39,68,.10);--r:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
+
+  #setupBanner{background:#fff3cd;border-bottom:2px solid var(--gold);padding:11px 28px;font-size:.84rem;color:#7a5c00;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  #setupBanner.hidden{display:none}
+  #apiUrlInput{flex:1;min-width:260px;padding:7px 11px;border-radius:7px;border:1.5px solid var(--gold);font-size:.83rem;font-family:'DM Sans',sans-serif;background:#fff;color:var(--text)}
+  .btn-su{background:var(--navy);color:#fff;border:none;padding:7px 15px;border-radius:7px;cursor:pointer;font-weight:600;font-size:.82rem}
+
+  .header{background:linear-gradient(135deg,var(--navy) 65%,var(--navy-l));color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(26,39,68,.18);position:sticky;top:0;z-index:100}
+  .hl{display:flex;align-items:center;gap:13px}
+  .h-title{font-family:'Playfair Display',serif;font-size:1.35rem}
+  .h-sub{font-size:.74rem;color:var(--gold-l);font-weight:300;margin-top:2px}
+  .hr{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .sdot{width:9px;height:9px;border-radius:50%;background:#aaa;display:inline-block;margin-right:4px;transition:background .3s}
+  .sdot.ok{background:#4caf50;box-shadow:0 0 6px #4caf5099}
+  .sdot.err{background:var(--red)}
+  .sdot.load{background:var(--gold);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .slbl{font-size:.76rem;color:rgba(255,255,255,.7)}
+  .lbtn{background:rgba(201,168,76,.18);border:1.5px solid var(--gold);color:var(--gold-l);padding:7px 15px;border-radius:8px;cursor:pointer;font-size:.82rem;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;transition:all .2s}
+  .lbtn:hover{background:rgba(201,168,76,.3)}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 18px}
+
+  .sr{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:22px}
+  @media(max-width:540px){.sr{grid-template-columns:1fr}}
+  .sc{background:#fff;border-radius:10px;padding:15px 18px;border:1px solid var(--border);text-align:center}
+  .sn{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--navy);font-weight:700}
+  .slb{font-size:.74rem;color:var(--tl);margin-top:2px}
+
+  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:22px}
+  .tab{padding:9px 19px;border-radius:8px 8px 0 0;cursor:pointer;font-weight:500;font-size:.88rem;color:var(--tl);border:2px solid transparent;border-bottom:none;transition:all .15s;background:transparent;margin-bottom:-2px}
+  .tab.active{background:#fff;color:var(--navy);border-color:var(--border);border-bottom-color:#fff;font-weight:600}
+  .tab:hover:not(.active){color:var(--navy);background:var(--cream2)}
+  .tc{display:none}
+  .tc.active{display:block;animation:fi .2s ease}
+  @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);padding:22px;margin-bottom:18px}
+  .ct{font-family:'Playfair Display',serif;font-size:1.03rem;color:var(--navy);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+
+  label{font-size:.82rem;font-weight:600;color:var(--navy);display:block;margin-bottom:4px}
+  textarea,input[type=text],input[type=date],input[type=password]{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.87rem;background:var(--cream);color:var(--text);transition:border .15s;outline:none}
+  textarea:focus,input:focus{border-color:var(--gold);background:#fff}
+  textarea{resize:vertical;min-height:108px}
+
+  .btn{padding:9px 19px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.87rem;transition:all .18s;display:inline-flex;align-items:center;gap:6px}
+  .bp{background:var(--navy);color:#fff}
+  .bp:hover{background:var(--navy-l);transform:translateY(-1px)}
+  .bg{background:var(--gold);color:var(--navy)}
+  .bg:hover{background:var(--gold-l)}
+  .bd{background:var(--red);color:#fff}
+  .bs{padding:5px 11px;font-size:.77rem}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+  .r2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+  @media(max-width:580px){.r2{grid-template-columns:1fr}}
+
+  .bdg{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:600}
+  .bn{background:#e8ecf5;color:var(--navy);border:1px solid #b8c2db}
+  .bgo{background:#fdf3d8;color:#a07a1c;border:1px solid #e8c97a}
+  .bgr{background:#e6f5ed;color:var(--green);border:1px solid #a8d8bf}
+
+  .tw{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  thead{background:var(--navy);color:#fff}
+  thead th{padding:11px 13px;text-align:left;font-weight:500;font-size:.79rem;letter-spacing:.3px}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--cream2)}
+  tbody td{padding:9px 13px}
+  .rn{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.77rem}
+  .r1{background:#fef3c7;color:#92400e;border:2px solid #f59e0b}
+  .r2c{background:#f1f5f9;color:#475569;border:2px solid #cbd5e1}
+  .r3{background:#fef2ef;color:#9a3412;border:2px solid #fed7aa}
+  .ro{background:var(--cream2);color:var(--tl);border:1px solid var(--border)}
+
+  .al{display:flex;flex-direction:column;gap:7px;max-height:330px;overflow-y:auto}
+  .ai{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--cream);border-radius:8px;border:1px solid var(--border);gap:8px}
+  .aif{flex:1;min-width:0}
+  .am{font-size:.72rem;color:var(--tl)}
+  .an{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ad{font-size:.71rem;color:var(--tl)}
+
+  .hl2{display:flex;flex-direction:column;gap:8px}
+  .hi{border:1.5px solid var(--border);border-radius:10px;background:var(--cream);overflow:hidden}
+  .hh{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#fff;cursor:pointer;border-bottom:1px solid var(--border)}
+  .hh:hover{background:var(--cream2)}
+  .hd{font-weight:600;color:var(--navy);font-size:.91rem}
+  .hb{padding:11px 14px;font-size:.82rem;color:var(--tl);display:none}
+
+  .pb{height:5px;border-radius:3px;background:var(--cream2);margin-top:3px;overflow:hidden;min-width:80px}
+  .pf{height:100%;border-radius:3px;background:var(--gold);transition:width .4s}
+
+  .mo{display:none;position:fixed;inset:0;background:rgba(26,39,68,.55);z-index:999;align-items:center;justify-content:center}
+  .mo.open{display:flex}
+  .md{background:#fff;border-radius:16px;padding:28px 32px;max-width:410px;width:92%;box-shadow:0 8px 48px rgba(26,39,68,.22);animation:mi .2s ease}
+  @keyframes mi{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+  .md h2{font-family:'Playfair Display',serif;color:var(--navy);margin-bottom:14px;font-size:1.12rem}
+  .mb{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+
+  .lo{display:none;position:fixed;inset:0;background:rgba(26,39,68,.94);z-index:9998;align-items:center;justify-content:center}
+  .lo.open{display:flex}
+  .lb{background:#fff;border-radius:18px;padding:36px 40px;text-align:center;max-width:330px;width:92%;box-shadow:0 16px 64px rgba(0,0,0,.4)}
+  .lb h2{font-family:'Playfair Display',serif;color:var(--navy);margin-bottom:5px}
+  .lb p{color:var(--tl);font-size:.83rem;margin-bottom:19px}
+  .pi{display:flex;gap:8px;justify-content:center;margin-bottom:15px}
+  .pi input{width:50px;height:57px;text-align:center;font-size:1.45rem;font-weight:700;border:2.5px solid var(--border);border-radius:10px;color:var(--navy)}
+  .pi input:focus{border-color:var(--gold)}
+  .roi{margin-top:12px;padding:11px;background:var(--cream2);border-radius:8px;font-size:.79rem;color:var(--tl)}
+
+  .toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--navy);color:#fff;padding:11px 19px;border-radius:10px;font-size:.87rem;box-shadow:var(--shadow);transform:translateY(70px);opacity:0;transition:all .3s;max-width:310px;display:flex;align-items:center;gap:7px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.success{border-left:4px solid var(--green)}
+  .toast.error{border-left:4px solid var(--red)}
+  .toast.info{border-left:4px solid var(--gold)}
+
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .div{height:1px;background:var(--border);margin:15px 0}
+  .tip{font-size:.74rem;color:var(--tl);margin-top:5px;font-style:italic}
+  .rob{background:#fdf3d8;border:1.5px solid var(--gold-l);border-radius:8px;padding:8px 14px;font-size:.81rem;color:#a07a1c;display:flex;align-items:center;gap:7px;margin-bottom:15px}
+  .es{text-align:center;padding:34px 18px;color:var(--tl)}
+  .es .em{font-size:2rem;margin-bottom:8px}
+  .ib{background:var(--cream2);border:1px solid var(--border);border-radius:10px;padding:15px;font-size:.84rem;line-height:1.85}
+  .sn2{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;background:var(--navy);color:#fff;border-radius:50%;font-size:.7rem;font-weight:700;margin-right:5px}
+</style>
+</head>
+<body>
+
+<!-- SETUP BANNER -->
+<div id="setupBanner">
+  ⚙️ <strong>1ère configuration :</strong> Collez l'URL de votre Google Apps Script déployé :
+  <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/XXXX/exec">
+  <button class="btn-su" onclick="saveApiUrl()">💾 Enregistrer</button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hl">
+    <span style="font-size:1.8rem">📋</span>
+    <div>
+      <div class="h-title">Priorités — Jours Fériés</div>
+      <div class="h-sub">Données partagées en temps réel via Google Sheets</div>
+    </div>
+  </div>
+  <div class="hr">
+    <span><span class="sdot load" id="sd"></span><span class="slbl" id="sl">Connexion…</span></span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- STATS -->
+  <div class="sr">
+    <div class="sc"><div class="sn" id="sA">—</div><div class="slb">Agents</div></div>
+    <div class="sc"><div class="sn" id="sF">—</div><div class="slb">Jours fériés historisés</div></div>
+    <div class="sc"><div class="sn" id="sT">—</div><div class="slb">Agent prioritaire</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="st('priorites')">📊 Priorités</div>
+    <div class="tab" onclick="st('agents')" id="tA">👥 Agents</div>
+    <div class="tab" onclick="st('feries')" id="tF">📅 Jours Fériés</div>
+    <div class="tab" onclick="st('config')" id="tC">⚙️ Configuration</div>
+  </div>
+
+  <!-- PRIORITES -->
+  <div class="tc active" id="tc-priorites">
+    <div class="card">
+      <div class="ct">🏆 Liste de priorité pour le prochain jour férié</div>
+      <div id="pList"><div class="es"><div class="em">⏳</div>Chargement…</div></div>
+    </div>
+  </div>
+
+  <!-- AGENTS -->
+  <div class="tc" id="tc-agents">
+    <div class="card">
+      <div class="ct">📥 Étape 1 — Importer la liste des agents</div>
+      <label>Collez la liste (matricule, nom, date d'embauche) :</label>
+      <textarea id="agIn" rows="8" placeholder="CN00566	RAFARASOA Fanomezana Albertine	01/10/23&#10;CN00567	RASOARIMALALA Volonirina Santatra	01/10/23&#10;CN00352	RAVOLALAINA Laurencia	02/11/21"></textarea>
+      <p class="tip">Format : Matricule | Nom | Date embauche — séparés par tabulation.</p>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn bp" id="btnIA" onclick="importAgents()">✅ Importer & Sauvegarder</button>
+        <button class="btn bs" style="background:var(--cream2);color:var(--navy)" onclick="document.getElementById('agIn').value=''">🗑️ Vider</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">👥 Agents enregistrés <span id="aC" class="bdg bn" style="margin-left:7px">0</span></div>
+      <div class="al" id="aList"><div class="es" style="padding:16px"><div class="em" style="font-size:1.5rem">👤</div>Aucun agent</div></div>
+    </div>
+  </div>
+
+  <!-- FERIES -->
+  <div class="tc" id="tc-feries">
+    <div class="card">
+      <div class="ct">📅 Étape 2 — Ajouter un jour férié passé</div>
+      <div class="r2">
+        <div><label>Date du jour férié</label><input type="date" id="fD"></div>
+        <div><label>Libellé (optionnel)</label><input type="text" id="fL" placeholder="ex: Fête Nationale"></div>
+      </div>
+      <div style="margin-top:13px">
+        <label>Liste des agents bénéficiaires (matricule + nom uniquement) :</label>
+        <textarea id="fA" rows="6" placeholder="CN00566	RAFARASOA Fanomezana Albertine&#10;CN00567	RASOARIMALALA Volonirina Santatra&#10;CN00352	RAVOLALAINA Laurencia"></textarea>
+        <p class="tip">Format : Matricule + Nom seulement — sans date. Les matricules non trouvés dans la liste principale sont automatiquement ignorés.</p>
+      </div>
+      <div style="margin-top:11px">
+        <button class="btn bp" id="btnAF" onclick="addFerie()">➕ Enregistrer ce jour férié</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">🗓️ Historique <span id="fC" class="bdg bgo" style="margin-left:7px">0</span></div>
+      <div class="hl2" id="fList"><div class="es" style="padding:16px"><div class="em" style="font-size:1.5rem">📅</div>Aucun jour férié</div></div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="tc" id="tc-config">
+    <div class="card">
+      <div class="ct">🌐 URL Google Apps Script</div>
+      <label>URL de l'API (à configurer une fois par utilisateur)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <input type="text" id="apiC" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1">
+        <button class="btn bg" onclick="saveApiC()">💾 Mettre à jour</button>
+      </div>
+      <p class="tip">Chaque utilisateur colle cette URL une seule fois dans son navigateur. Ensuite tout est automatique.</p>
+    </div>
+    <div class="card">
+      <div class="ct">👁️ Comment partager avec votre équipe</div>
+      <div class="ib">
+        <strong>Architecture :</strong> Votre outil → Google Apps Script → Google Sheets<br><br>
+        <span class="sn2">1</span> Hébergez ce fichier sur <strong>GitHub Pages</strong> (lien public permanent)<br>
+        <span class="sn2">2</span> Partagez ce lien avec votre équipe<br>
+        <span class="sn2">3</span> Chaque collègue colle l'URL Apps Script une seule fois<br>
+        <span class="sn2">4</span> Tous voient les <strong>mêmes données en temps réel</strong><br>
+        <span class="sn2">5</span> Seul vous (avec le PIN) pouvez modifier<br><br>
+        🔄 L'outil se rafraîchit automatiquement toutes les 60 secondes.<br><br>
+        <a href="https://docs.google.com/spreadsheets/d/1qKUFoApqu63SgSVT9GuQcUk0GlO5LLC0lDS18SHVZUw/edit#gid=0" target="_blank" style="color:var(--navy);font-weight:600">📊 Ouvrir le Google Sheets de référence</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUPP -->
+<div class="mo" id="dMo">
+  <div class="md">
+    <h2>⚠️ Confirmer la suppression</h2>
+    <p id="dMsg" style="color:var(--tl);font-size:.87rem"></p>
+    <div class="mb">
+      <button class="btn" style="background:var(--cream2);color:var(--text)" onclick="closeModal()">Annuler</button>
+      <button class="btn bd" id="dBtn">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_API='pjf_api_v3';
+let API=localStorage.getItem(LS_API)||'';
+let S={agents:[],feries:[],unlocked:false};
+let PIN='';
+
+// ── API ──────────────────────────────────────────────
+async function apiGet(){
+  const r=await fetch(API+'?action=getAll&t='+Date.now());
+  return r.json();
+}
+async function apiPost(body){
+  if(!API){toast('URL API non configurée','error');return null}
+  // Tout en GET pour éviter les problèmes CORS
+  const url=new URL(API);
+  Object.keys(body).forEach(k=>{
+    const v=body[k];
+    if(k==='agents'||k==='ferie'){
+      url.searchParams.set('data',encodeURIComponent(JSON.stringify(v)));
+    } else {
+      url.searchParams.set(k,v);
+    }
+  });
+  url.searchParams.set('pin',PIN);
+  url.searchParams.set('t',Date.now());
+  const r=await fetch(url.toString());
+  return r.json();
+}
+
+// ── SETUP URL ────────────────────────────────────────
+function saveApiUrl(){
+  const u=document.getElementById('apiUrlInput').value.trim();
+  if(!u.includes('script.google.com')){toast('URL invalide','error');return}
+  localStorage.setItem(LS_API,u);API=u;
+  document.getElementById('setupBanner').classList.add('hidden');
+  toast('✅ URL enregistrée','success');loadData();
+}
+function saveApiC(){
+  const u=document.getElementById('apiC').value.trim();
+  if(!u.includes('script.google.com')){toast('URL invalide','error');return}
+  localStorage.setItem(LS_API,u);API=u;
+  document.getElementById('setupBanner').classList.add('hidden');
+  toast('✅ URL mise à jour','success');loadData();
+}
+
+// ── LOAD ─────────────────────────────────────────────
+async function loadData(){
+  sync('load','Synchronisation…');
+  try{
+    if(!API){sync('err','Non configuré');return}
+    const d=await apiGet();
+    if(!d||d.error){sync('err','Erreur connexion');return}
+    S.agents=d.agents||[];S.feries=d.feries||[];
+    sync('ok','Synchronisé');refreshAll();
+  }catch(e){sync('err','Hors ligne');toast('Impossible de joindre le serveur','error')}
+}
+function sync(s,l){
+  document.getElementById('sd').className='sdot '+s;
+  document.getElementById('sl').textContent=l;
+}
+
+// ── ACCÈS DIRECT (sans PIN) ──────────────────────────
+function showLock(){}
+function closeLock(){}
+async function verifyPin(){}
+function toggleLock(){}
+function updateUI(){
+  S.unlocked=true;
+  ['tA','tF','tC'].forEach(i=>{
+    const el=document.getElementById(i);
+    if(el) el.style.display='';
+  });
+  refreshAll();
+}
+  el.addEventListener('keydown',e=>{if(e.key==='Enter')verifyPin()});
+});
+
+// ── TABS ─────────────────────────────────────────────
+function st(n){
+  const ns=['priorites','agents','feries','config'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ns[i]===n));
+  ns.forEach(x=>document.getElementById('tc-'+x).classList.toggle('active',x===n));
+}
+
+// ── PARSE ────────────────────────────────────────────
+function parseAg(line){
+  line=line.trim();if(!line)return null;
+  const p=line.split(/\t+|\s{2,}/);if(p.length<2)return null;
+  const id=p[0].trim();
+  if(!/^[A-Za-z]{1,4}\d{3,}/.test(id))return null;
+  const hp=p[p.length-1].trim();
+  const name=p.slice(1,p.length-1).join(' ').trim()||p[1].trim();
+  const hd=parseD(hp);
+  return{id,name,hireDate:hd?hd.toISOString().slice(0,10):''};
+}
+function parseD(s){
+  if(!s)return null;
+  const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){let y=parseInt(m[3]);if(y<100)y+=2000;return new Date(y,parseInt(m[2])-1,parseInt(m[1]))}
+  const d=new Date(s);return isNaN(d)?null:d;
+}
+function fmtD(s){
+  if(!s)return'—';
+  const d=new Date(s);
+  return isNaN(d)?s:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+// ── IMPORT AGENTS ────────────────────────────────────
+async function importAgents(){
+  
+  const lines=document.getElementById('agIn').value.split('\n');
+  const agents=[];let fail=0;
+  lines.forEach(l=>{const a=parseAg(l);if(!a){if(l.trim())fail++;return}if(!agents.find(x=>x.id===a.id))agents.push(a)});
+  if(!agents.length){toast('Aucun agent valide','error');return}
+  setBL('btnIA',true,'✅ Importer & Sauvegarder');
+  try{
+    const r=await apiPost({action:'saveAgents',agents});
+    if(r&&r.success){toast(`✅ ${r.count} agents sauvegardés${fail?', '+fail+' ignorés':''}`, 'success');await loadData()}
+    else toast('Erreur sauvegarde','error');
+  }catch{toast('Erreur connexion','error')}
+  setBL('btnIA',false,'✅ Importer & Sauvegarder');
+}
+
+// ── ADD FERIE ────────────────────────────────────────
+async function addFerie(){
+  
+  const dateStr=document.getElementById('fD').value;
+  const label=document.getElementById('fL').value.trim();
+  const txt=document.getElementById('fA').value;
+  if(!dateStr){toast('Sélectionnez une date','error');return}
+  if(!txt.trim()){toast('Collez la liste des bénéficiaires','error');return}
+  const known=new Set(S.agents.map(a=>a.id));
+  const bens=[];let ign=0;
+  txt.split('\n').forEach(line=>{
+    line=line.trim();if(!line)return;
+    const id=line.split(/\t+|\s+/)[0].trim();
+    if(!/^[A-Za-z]{1,4}\d{3,}/.test(id))return;
+    if(known.has(id)){if(!bens.includes(id))bens.push(id)}else ign++;
+  });
+  if(!bens.length){toast('Aucun matricule reconnu dans la liste principale','error');return}
+  setBL('btnAF',true,'➕ Enregistrer ce jour férié');
+  try{
+    const r=await apiPost({action:'addFerie',ferie:{date:dateStr,label,beneficiaires:bens}});
+    if(r&&r.success){
+      toast(`✅ Enregistré — ${bens.length} agents${ign?' ('+ign+' ignorés)':''}`, 'success');
+      document.getElementById('fD').value='';
+      document.getElementById('fL').value='';
+      document.getElementById('fA').value='';
+      await loadData();
+    }else toast('Erreur sauvegarde','error');
+  }catch{toast('Erreur connexion','error')}
+  setBL('btnAF',false,'➕ Enregistrer ce jour férié');
+}
+
+// ── CHANGE PIN ───────────────────────────────────────
+async function changePin(){
+  
+  const np=document.getElementById('nP').value,cp=document.getElementById('cP').value;
+  if(!/^\d{4}$/.test(np)){toast('PIN = 4 chiffres','error');return}
+  if(np!==cp){toast('PINs différents','error');return}
+  const r=await apiPost({action:'changePin',newPin:np});
+  if(r&&r.success){PIN=np;toast('✅ PIN modifié','success');document.getElementById('nP').value='';document.getElementById('cP').value=''}
+  else toast('Erreur','error');
+}
+
+// ── DELETE ───────────────────────────────────────────
+function confirmDel(type,id,lbl){
+  
+  document.getElementById('dMsg').textContent='Supprimer : '+lbl+' ?';
+  document.getElementById('dBtn').onclick=async()=>{
+    const b=type==='agent'?{action:'deleteAgent',id}:{action:'deleteFerie',date:id};
+    const r=await apiPost(b);
+    if(r&&r.success){toast('🗑️ Supprimé','info');await loadData()}else toast('Erreur','error');
+    closeModal();
+  };
+  document.getElementById('dMo').classList.add('open');
+}
+function closeModal(){document.getElementById('dMo').classList.remove('open')}
+
+// ── PRIORITIES ───────────────────────────────────────
+function calcP(){
+  return S.agents.map(a=>{
+    let cnt=0,last=null;
+    S.feries.forEach(f=>{
+      if(f.beneficiaires.includes(a.id)){
+        cnt++;const d=new Date(f.date);
+        if(!last||d>last)last=d;
+      }
+    });
+    return{...a,count:cnt,lastFerie:last};
+  }).sort((a,b)=>{
+    if(a.count!==b.count)return a.count-b.count;
+    if(!a.lastFerie&&!b.lastFerie)return new Date(a.hireDate)-new Date(b.hireDate);
+    if(!a.lastFerie)return -1;if(!b.lastFerie)return 1;
+    if(a.lastFerie.getTime()!==b.lastFerie.getTime())return a.lastFerie-b.lastFerie;
+    return new Date(a.hireDate)-new Date(b.hireDate);
+  });
+}
+
+// ── RENDER ───────────────────────────────────────────
+function refreshAll(){renderStats();renderP();renderA();renderF()}
+
+function renderStats(){
+  document.getElementById('sA').textContent=S.agents.length;
+  document.getElementById('sF').textContent=S.feries.length;
+  const p=calcP();
+  document.getElementById('sT').textContent=p.length?p[0].name.split(' ')[0]:'—';
+}
+
+function renderP(){
+  const el=document.getElementById('pList'),list=calcP();
+  if(!list.length){el.innerHTML='<div class="es"><div class="em">📭</div>Importez les agents pour voir les priorités.</div>';return}
+  const mx=Math.max(...list.map(a=>a.count))||1;
+  el.innerHTML=`<div class="tw"><table>
+  <thead><tr><th>Rang</th><th>Matricule</th><th>Nom</th><th>Date embauche</th><th>Nb J.F.</th><th>Dernier J.F. bénéficié</th><th>Priorité</th></tr></thead>
+  <tbody>${list.map((a,i)=>{
+    const rc=i===0?'r1':i===1?'r2c':i===2?'r3':'ro';
+    const pct=a.count===0?100:Math.max(10,100-Math.round((a.count/mx)*80));
+    return`<tr>
+      <td><span class="rn ${rc}">${i+1}</span></td>
+      <td><span class="bdg bn">${a.id}</span></td>
+      <td style="font-weight:${i<3?'600':'400'}">${a.name}</td>
+      <td>${fmtD(a.hireDate)}</td>
+      <td style="text-align:center">${a.count===0?'<span class="bdg bgr">Jamais</span>':'<span class="bdg bgo">'+a.count+'</span>'}</td>
+      <td>${a.lastFerie?fmtD(a.lastFerie.toISOString()):'<em style="color:var(--green);font-size:.77rem">Aucun</em>'}</td>
+      <td style="min-width:85px"><div class="pb"><div class="pf" style="width:${pct}%"></div></div></td>
+    </tr>`}).join('')}</tbody></table></div>`;
+}
+
+function renderA(){
+  const el=document.getElementById('aList');
+  document.getElementById('aC').textContent=S.agents.length;
+  if(!S.agents.length){el.innerHTML='<div class="es" style="padding:15px"><div class="em" style="font-size:1.5rem">👤</div>Aucun agent</div>';return}
+  el.innerHTML=S.agents.map(a=>`
+  <div class="ai">
+    <div class="aif"><div class="am">${a.id}</div><div class="an">${a.name}</div><div class="ad">📅 ${fmtD(a.hireDate)}</div></div>
+    ${S.unlocked?`<button class="btn bd bs" onclick="confirmDel('agent','${a.id}','${esc(a.name)}')">🗑️</button>`:''}
+  </div>`).join('');
+}
+
+function renderF(){
+  const el=document.getElementById('fList');
+  document.getElementById('fC').textContent=S.feries.length;
+  if(!S.feries.length){el.innerHTML='<div class="es" style="padding:15px"><div class="em" style="font-size:1.5rem">📅</div>Aucun jour férié</div>';return}
+  el.innerHTML=[...S.feries].reverse().map((f,i)=>{
+    const bens=f.beneficiaires.map(id=>{const a=S.agents.find(x=>x.id===id);return a?a.name:null}).filter(Boolean);
+    return`<div class="hi">
+    <div class="hh" onclick="togH(${i})">
+      <div>
+        <div class="hd">📅 ${fmtD(f.date)}${f.label?' — '+f.label:''}</div>
+        <div style="font-size:.74rem;color:var(--tl);margin-top:2px">${f.beneficiaires.length} agent(s)</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="bdg bgo">${f.beneficiaires.length}</span>
+        ${S.unlocked?`<button class="btn bd bs" onclick="event.stopPropagation();confirmDel('ferie','${f.date}','${fmtD(f.date)}')">🗑️</button>`:''}
+        <span style="color:var(--tl)">▾</span>
+      </div>
+    </div>
+    <div class="hb" id="hb${i}">
+      ${bens.length?bens.map(n=>`<span class="bdg bn" style="margin:2px">${n}</span>`).join(''):'<em>Aucun agent reconnu</em>'}
+    </div></div>`;
+  }).join('');
+}
+
+function togH(i){const e=document.getElementById('hb'+i);e.style.display=e.style.display==='block'?'none':'block'}
+
+// ── HELPERS ──────────────────────────────────────────
+function toast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+function setBL(id,loading,lbl){
+  const b=document.getElementById(id);if(!b)return;
+  b.disabled=loading;
+  b.innerHTML=loading?'<span class="spin"></span> Sauvegarde…':lbl;
+}
+function esc(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;")}
+
+// ── INIT ─────────────────────────────────────────────
+window.onload=()=>{
+  if(API){document.getElementById('setupBanner').classList.add('hidden');document.getElementById('apiC').value=API;loadData()}
+  else sync('err','Non configuré');
+  updateUI();
+  setInterval(()=>{if(API)loadData()},60000);
+};
+</script>
+</body>
+</html>
